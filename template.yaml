@@ -1,0 +1,98 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Description: boxin
+
+Parameters:
+  ApplicationName:
+    Description: resource prefix
+    Type: String
+    Default: boxin
+  ScheduleExpressionMorning:
+    Description: schedule expression for the eventbridge scheduler
+    Type: String
+    Default: cron(*/20 6-8 * * ? *)
+  ScheduleExpressionWholeDay:
+    Description: schedule expression for the eventbridge scheduler
+    Type: String
+    Default: cron(30 */3 * * ? *)
+  WebhookUrl:
+    Description: webhook endpoint url for notification
+    Type: String
+  SearchKeyword:
+    Description: search keyword for twitter
+    Type: String
+    Default: 【まだ家を出てない人へ】
+  SearchAuthorId:
+    Description: search author id for twitter
+    Type: String
+    Default: slimboy24
+  DaysToRetainLogs:
+    Description: days to retain logs in CloudWatch
+    Type: Number
+    Default: 30
+
+Resources:
+  Function:
+    Type: AWS::Serverless::Function
+    Metadata:
+      BuildMethod: go1.x
+    Properties:
+      FunctionName: !Sub ${ApplicationName}
+      CodeUri: .
+      Handler: bootstrap
+      Runtime: provided.al2023
+      Timeout: 15
+      MemorySize: 128
+      Architectures:
+        - x86_64
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref HistoryTable
+      Environment:
+        Variables:
+          HISTORY_TABLE: !Ref HistoryTable
+          WEBHOOK_URL: !Ref WebhookUrl
+          SEARCH_KEYWORD: !Ref SearchKeyword
+          SEARCH_AUTHOR_ID: !Ref SearchAuthorId
+      Events:
+        ScheduleEventMorning:
+          Type: ScheduleV2
+          Properties:
+            Name: !Sub ${ApplicationName}-scheduler-morning
+            ScheduleExpression: !Ref ScheduleExpressionMorning
+            ScheduleExpressionTimezone: Asia/Tokyo
+        ScheduleEventWholeDay:
+          Type: ScheduleV2
+          Properties:
+            Name: !Sub ${ApplicationName}-scheduler-whole-day
+            ScheduleExpression: !Ref ScheduleExpressionWholeDay
+            ScheduleExpressionTimezone: Asia/Tokyo
+
+  HistoryTable:
+    Type: AWS::DynamoDB::Table
+    # DeletionPolicy: Retain
+    # UpdateReplacePolicy: Retain
+    Properties:
+      TableName: !Sub ${ApplicationName}-history
+      AttributeDefinitions:
+        - AttributeName: tweetDate
+          AttributeType: S
+      BillingMode: PROVISIONED
+      # DeletionProtectionEnabled: True
+      KeySchema:
+        - AttributeName: tweetDate
+          KeyType: HASH
+      ProvisionedThroughput:
+        ReadCapacityUnits: 1
+        WriteCapacityUnits: 1
+      TimeToLiveSpecification:
+        AttributeName: ttl
+        Enabled: true
+
+  FunctionLogGroup:
+    Type: AWS::Logs::LogGroup
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
+    Properties:
+      LogGroupName: !Sub /aws/lambda/${Function}
+      RetentionInDays: !Ref DaysToRetainLogs

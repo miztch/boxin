@@ -1,0 +1,34 @@
+{
+    "name": "Go Dev Container",
+    "image": "mcr.microsoft.com/devcontainers/go:1-1.21-bullseye",
+    "features": {
+        "ghcr.io/devcontainers/features/python:1": {
+            "version": "latest"
+        },
+        "ghcr.io/devcontainers/features/aws-cli:1": {},
+        "ghcr.io/customink/codespaces-features/sam-cli:1": {}
+    },
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "amazonwebservices.aws-toolkit-vscode",
+                "esbenp.prettier-vscode",
+                "github.vscode-github-actions",
+                "redhat.vscode-yaml",
+                "ms-vscode.makefile-tools",
+                "kddejong.vscode-cfn-lint",
+                "oderwat.indent-rainbow"
+            ],
+            "settings": {
+                "terminal.integrated.shell.linux": "/usr/bin/zsh",
+                "[yaml]": {
+                    "editor.defaultFormatter": "esbenp.prettier-vscode"
+                }
+            }
+        }
+    },
+    "mounts": [
+        "source=${env:HOME}${env:USERPROFILE}/.aws,target=/home/vscode/.aws,type=bind,consistency=cached"
+    ],
+    "postCreateCommand": "pip install cfn-lint"
+}
