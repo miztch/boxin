@@ -7,14 +7,13 @@ Parameters:
     Description: resource prefix
     Type: String
     Default: boxin
-  ScheduleExpressionMorning:
-    Description: schedule expression for the eventbridge scheduler
+  SeasonState:
+    Description: running mode for the scheduler
     Type: String
-    Default: cron(*/20 6-8 * * ? *)
-  ScheduleExpressionWholeDay:
-    Description: schedule expression for the eventbridge scheduler
-    Type: String
-    Default: cron(30 */3 * * ? *)
+    Default: OnSeason
+    AllowedValues:
+      - OnSeason
+      - OffSeason
   WebhookUrl:
     Description: webhook endpoint url for notification
     Type: String
@@ -30,6 +29,13 @@ Parameters:
     Description: days to retain logs in CloudWatch
     Type: Number
     Default: 30
+
+Mappings:
+  Variables:
+    OnSeason:
+      SchedulerExpression: cron(*/20 6-9 * * ? *)
+    OffSeason:
+      SchedulerExpression: cron(0 9 * * ? *)
 
 Resources:
   Function:
@@ -55,17 +61,14 @@ Resources:
           SEARCH_KEYWORD: !Ref SearchKeyword
           SEARCH_AUTHOR_ID: !Ref SearchAuthorId
       Events:
-        ScheduleEventMorning:
+        ScheduleEvent:
           Type: ScheduleV2
           Properties:
-            Name: !Sub ${ApplicationName}-scheduler-morning
-            ScheduleExpression: !Ref ScheduleExpressionMorning
-            ScheduleExpressionTimezone: Asia/Tokyo
-        ScheduleEventWholeDay:
-          Type: ScheduleV2
-          Properties:
-            Name: !Sub ${ApplicationName}-scheduler-whole-day
-            ScheduleExpression: !Ref ScheduleExpressionWholeDay
+            Name: !Sub ${ApplicationName}-scheduler
+            ScheduleExpression: !FindInMap
+              - Variables
+              - !Ref SeasonState
+              - SchedulerExpression
             ScheduleExpressionTimezone: Asia/Tokyo
 
   HistoryTable:
