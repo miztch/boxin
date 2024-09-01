@@ -33,6 +33,12 @@ func handler(ctx context.Context) {
 		return
 	}
 
+	// if no tweets are found, exit
+	if len(tweets) == 0 {
+		log.Println("[info] No tweets found")
+		return
+	}
+
 	// Check if the latest tweet is from today in JST
 	latestTweet := tweets[0]
 	haveUnsentTweet, err := latestTweet.isOnToday()
