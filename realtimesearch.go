@@ -17,6 +17,8 @@ const (
 	crawlerUserAgent       = "Googlebot/2.1 (+http://www.google.com/bot.html)"
 	keywordQueryParam      = "?p="
 	authorIdPrefix         = "+id:"
+	Asc                    = true
+	Desc                   = false
 )
 
 // buildRequestURL builds a request URL for Yahoo! Realtime Search
@@ -110,5 +112,5 @@ func realtimeSearch(scrapeConfig scrapeConfig) ([]Tweet, error) {
 		return nil, fmt.Errorf("[error] failed to visit Yahoo! Realtime Search, %w", err)
 	}
 
-	return tweets, nil
+	return sortTweetsByTime(tweets, Desc), nil
 }

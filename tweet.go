@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"sort"
 	"strconv"
 	"time"
 )
@@ -47,4 +48,18 @@ func (t *Tweet) isOnToday() (bool, error) {
 	tweetDateJST := tweetTimeJST.Format("2006-01-02")
 
 	return tweetDateJST == currentDateJST, nil
+}
+
+// sortTweetsByTime sorts tweets by time
+func sortTweetsByTime(tweets []Tweet, asc bool) []Tweet {
+	sortedTweets := append([]Tweet(nil), tweets...)
+
+	sort.Slice(sortedTweets, func(i, j int) bool {
+		ts1, _ := sortedTweets[i].getTimestamp()
+		ts2, _ := sortedTweets[j].getTimestamp()
+
+		return ts1 < ts2 == asc
+	})
+
+	return sortedTweets
 }
